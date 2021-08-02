@@ -1,0 +1,184 @@
+service: sls
+
+custom:
+  settings:
+    POSTS_TABLE: posts
+    USERS_TABLE: user
+    ORDERS_TABLE: orders
+    ORDERS_DETAILS_TABLE: orderDetailsTable
+    CART_TABLE: cartTable
+
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: eu-west-2
+  environment: ${self:custom.settings}
+  iamRoleStatements:
+   - Effect: "Allow"
+     Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+    #  Resource:
+      # - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.POSTS_TABLE}"
+     Resource: "arn:aws:dynamodb:us-east-1:213148150646:table/*"
+    #  Resource: "arn:aws:dynamodb:us-east-1:213148150646:table/USERS_TABLE"
+
+functions:
+  registerUser:
+    handler: handler.registerUser
+    events:
+    - http:
+        path: /registerUser
+        method: post
+  userLogin:
+    handler: handler.userLogin
+    events:
+    - http:
+        path: /login
+        method: post
+  placeOrders:
+    handler: handler.placeOrders
+    events:
+    - http:
+        path: /placeOrder
+        method: post
+  searchProduct:
+    handler: handler.searchProduct
+    events:
+    - http:
+        path: /searchProduct
+        method: post
+  getAllOrdersOFUser:
+    handler: handler.getAllOrdersOFUser
+    events:
+    - http:
+        path: /allOrders
+        method: post
+  updateUserProfile:
+    handler: handler.updateUserProfile
+    events:
+    - http:
+        path: /updateUserProfile/{id}
+        method: put
+  addToCart:
+    handler: handler.addToCart
+    events:
+    - http:
+        path: /addToCart
+        method: post
+  removeFromCart:
+    handler: handler.removeFromCart
+    events:
+    - http:
+        path: /removeFromCart
+        method: delete
+
+
+resources:
+  Resources:
+    PostsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+        - AttributeName: "id"
+          AttributeType: "S"
+        KeySchema:
+        - AttributeName: "id"
+          KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.settings.POSTS_TABLE}
+        
+    UserTable:
+       Type: AWS::DynamoDB::Table
+       Properties:
+          AttributeDefinitions:
+          - AttributeName: "id"
+            AttributeType: "S"
+          - AttributeName: "fname"
+            AttributeType: "S"  
+          - AttributeName: "lname"
+            AttributeType: "S"
+          - AttributeName: "ustatus"
+            AttributeType: "S"
+          - AttributeName: "userName"
+            AttributeType: "S"
+          - AttributeName: "password"
+            AttributeType: "S" 
+          KeySchema:
+          - AttributeName: "id"
+            KeyType: "HASH"
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+          TableName: ${self:custom.settings.USERS_TABLE}
+    orderTable:
+       Type: AWS::DynamoDB::Table
+       Properties:
+          AttributeDefinitions:
+          - AttributeName: "id"
+            AttributeType: "S"
+          - AttributeName: "user_id"
+            AttributeType: "S"
+          - AttributeName: "order_amount"
+            AttributeType: "N"
+          - AttributeName: "payment_method"
+            AttributeType: "S"
+          - AttributeName: "order_details"
+            AttributeType: "S"
+          KeySchema:
+          - AttributeName: "id"
+            KeyType: "HASH"
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+          TableName: ${self:custom.settings.ORDERS_TABLE}
+    ordersDetailsTable:
+       Type: AWS::DynamoDB::Table
+       Properties:
+          AttributeDefinitions:
+          - AttributeName: "id"
+            AttributeType: "S"
+          - AttributeName: "order_id"
+            AttributeType: "S"
+          KeySchema:
+          - AttributeName: "id"
+            KeyType: "HASH"
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+          TableName: ${self:custom.settings.ORDERS_DETAILS_TABLE}
+    cartTable:
+       Type: AWS::DynamoDB::Table
+       Properties:
+          AttributeDefinitions:
+          - AttributeName: "id"
+            AttributeType: "S"
+          - AttributeName: "user_id"
+            AttributeType: "S"
+          - AttributeName: "product_id"
+            AttributeType: "S"
+          - AttributeName: "product_quantity"
+            AttributeType: "S"
+          - AttributeName: "product_price"
+            AttributeType: "S"
+          - AttributeName: "product_total_amount"
+            AttributeType: "S"
+
+          
+          
+          KeySchema:
+          - AttributeName: "id"
+            KeyType: "HASH"
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+          TableName: ${self:custom.settings.CART_TABLE}
+    
+            
